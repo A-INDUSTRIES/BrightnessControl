@@ -69,10 +69,17 @@ fn main() {
         Some("run") => {
             let _ = run_app();
         }
-        Some("info") => println!(
-            "{:.2}%",
-            get_current_brightness() as f32 / get_max_brightness() as f32 * 100f32
-        ),
+        Some("info") => {
+            // If the max brightness, assume there is in fact no brightness control.
+            if get_max_brightness() != 1 {
+                println!(
+                    "{:.2}%",
+                    get_current_brightness() as f32 / get_max_brightness() as f32 * 100f32
+                )
+            } else {
+                exit(0);
+            }
+        }
         _ => exit(0),
     }
 }
@@ -96,7 +103,7 @@ fn get_current_brightness() -> u32 {
         Command::new("brightnessctl")
             .arg("g")
             .output()
-            .expect("Cannot run brightnessctl")
+            .expect("Cannot get current brigthness")
             .stdout,
     )
     .unwrap()
@@ -110,7 +117,7 @@ fn get_max_brightness() -> u32 {
         Command::new("brightnessctl")
             .arg("m")
             .output()
-            .expect("Cannot run brightnessctl")
+            .expect("Cannot get maximum brightness")
             .stdout,
     )
     .unwrap()
