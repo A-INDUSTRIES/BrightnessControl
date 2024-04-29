@@ -1,0 +1,8 @@
+[package]
+name = "brightctl"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iced = { git = "https://github.com/iced-rs/iced.git", features = ["advanced"] }
+clap = "4.5.4"
