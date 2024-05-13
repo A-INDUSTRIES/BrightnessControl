@@ -1,17 +1,22 @@
 use clap::Command as ClapCommand;
 use iced::widget::{column, container, slider, text, Container, Theme};
 use iced::window::Settings;
-use iced::{alignment::Horizontal, Alignment, Length, Size};
+use iced::{
+    alignment::Horizontal, keyboard, keyboard::key::Named, Alignment, Length, Size, Subscription,
+};
 use std::process::{exit, Command};
 
 #[derive(Clone, Debug)]
 enum Message {
-    BrightnessAdjust(u32),
+    Adjust(u32),
+    Add,
+    Minus,
 }
 
 struct App {
     current_brightness: u32,
     current_brightness_percentage: f32,
+    step: u32,
 }
 
 impl App {
@@ -19,11 +24,11 @@ impl App {
         let control = slider(
             0..=get_max_brightness(),
             self.current_brightness,
-            Message::BrightnessAdjust,
+            Message::Adjust,
         )
-        .step(1u32)
+        .step(self.step)
         .width(Length::Fill);
-        let stat = text(format!("{:.2}%", self.current_brightness_percentage))
+        let stat = text(format!("{:.0}%", self.current_brightness_percentage))
             .horizontal_alignment(Horizontal::Center);
         container(column![control, stat].align_items(Alignment::Center))
             .padding([2, 10])
@@ -35,17 +40,41 @@ impl App {
 
     fn update(&mut self, message: Message) {
         match message {
-            Message::BrightnessAdjust(new) => {
+            Message::Adjust(new) => {
                 self.current_brightness = new;
                 self.current_brightness_percentage =
                     (new as f32 / get_max_brightness() as f32) * 100f32;
                 set_brightness(new);
+            }
+            Message::Add => {
+                if self.current_brightness < get_max_brightness() {
+                    self.current_brightness += 1;
+                    self.current_brightness_percentage =
+                        (self.current_brightness as f32 / get_max_brightness() as f32) * 100f32;
+                    set_brightness(self.current_brightness);
+                }
+            }
+            Message::Minus => {
+                if self.current_brightness > 0 {
+                    self.current_brightness -= 1;
+                    self.current_brightness_percentage =
+                        (self.current_brightness as f32 / get_max_brightness() as f32) * 100f32;
+                    set_brightness(self.current_brightness);
+                }
             }
         }
     }
 
     fn theme(&self) -> Theme {
         Theme::CatppuccinMacchiato
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        keyboard::on_key_press(|key, _| match key.as_ref() {
+            keyboard::Key::Named(Named::ArrowUp) => Some(Message::Add),
+            keyboard::Key::Named(Named::ArrowDown) => Some(Message::Minus),
+            _ => None,
+        })
     }
 }
 
@@ -56,6 +85,7 @@ impl Default for App {
             current_brightness_percentage: (get_current_brightness() as f32
                 / get_max_brightness() as f32)
                 * 100f32,
+            step: get_max_brightness() / 100,
         }
     }
 }
@@ -95,6 +125,7 @@ fn run_app() -> iced::Result {
             },
             ..Default::default()
         })
+        .subscription(App::subscription)
         .run()
 }
 
