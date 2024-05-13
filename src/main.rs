@@ -103,7 +103,7 @@ fn main() {
             // If the max brightness, assume there is in fact no brightness control.
             if get_max_brightness() != 1 {
                 println!(
-                    "{:.2}%",
+                    "{:.0}%",
                     get_current_brightness() as f32 / get_max_brightness() as f32 * 100f32
                 )
             } else {
